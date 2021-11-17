@@ -3,10 +3,12 @@ extern crate pest;
 use error::Error;
 use metaphone::{Rule, Word};
 use pest::Parser;
+#[cfg(feature = "reqwest")]
 use reqwest;
 use serde_json;
 use std::collections::HashMap;
 use std::fs;
+#[cfg(feature = "reqwest")]
 use std::io::{self, BufRead};
 use std::path::Path;
 
@@ -158,9 +160,8 @@ fn eval_alliteration(phones_a: &[Vec<String>], phones_b: &[Vec<String>]) -> bool
     false
 }
 
-fn from_json_file(path: &Path) -> Result<HashMap<String, Vec<Vec<String>>>, Error> {
-    let dict_json: String;
-
+#[cfg(feature = "reqwest")]
+fn create_if_does_not_exist(path: &Path) -> Result<(), Error> {
     if !path.exists() {
         // regenerate if the file isn't there
         if path.is_dir() {
@@ -169,12 +170,25 @@ fn from_json_file(path: &Path) -> Result<HashMap<String, Vec<Vec<String>>>, Erro
             download_and_serialize(&path)?;
         }
     }
+    Ok(())
+}
+
+#[cfg(not(feature = "reqwest"))]
+fn create_if_does_not_exist(_: &Path) -> Result<(), Error> {
+    Ok(())
+}
+
+fn from_json_file(path: &Path) -> Result<HashMap<String, Vec<Vec<String>>>, Error> {
+    let dict_json: String;
+
+    create_if_does_not_exist(path)?;
 
     dict_json = fs::read_to_string(path)?;
     let dict: HashMap<String, Vec<Vec<String>>> = serde_json::from_str(&dict_json)?;
     Ok(dict)
 }
 
+#[cfg(feature = "reqwest")]
 pub fn download_and_serialize(path: &Path) -> Result<(), Error> {
     let dict_string = reqwest::blocking::get(
         "https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict",
@@ -215,6 +229,7 @@ pub fn download_and_serialize(path: &Path) -> Result<(), Error> {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "reqwest")]
     #[test]
     fn test_download_and_serialze() {
         let dir = tempfile::tempdir().unwrap();

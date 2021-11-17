@@ -1,3 +1,4 @@
+#[cfg(feature = "reqwest")]
 use reqwest;
 use serde_json;
 use std::fmt;
@@ -30,6 +31,7 @@ impl From<serde_json::Error> for Error {
     }
 }
 
+#[cfg(feature = "reqwest")]
 impl From<reqwest::Error> for Error {
     fn from(err: reqwest::Error) -> Self {
         Error::InputError(format!("{}", err))

@@ -46,6 +46,7 @@ extern crate pest;
 /// ```
 #[macro_use]
 extern crate pest_derive;
+#[cfg(feature = "reqwest")]
 extern crate reqwest;
 extern crate serde_json;
 mod error;
